@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add zapisi</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+</head>
+<body>
+
+    <div class="container">
+        <div align="left">
+            Добавление записи
+        </div>
+    </div>
+
+
+    <form> <!--добавить method=POST-->
+      <div class="form-group col-md-4">
+        <label for="inputState">Аккаунт</label>
+          <select id="inputState" class="form-control">
+            <option selected>Choose...</option>
+            <option>...????</option>
+          </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-2">
+          <label for="tiker">Тикер</label>
+          <input type="text" class="form-control" id="tiker">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="volation">IV, ожидаемая волативность в %</label>
+          <input type="number" class="form-control" id="volation">
+        </div>
+        <div class="form-group col-md-4">
+          <label for="risk">Риск на сделку, в %</label>
+          <input type="number" class="form-control" id="risk">
+        </div>
+
+        <div class="form-group col-md-4">
+          <label for="inputTimeFrom">Время снятия стартовой цены от</label>
+          <input type="time" class="form-control" id="inputTimeFrom">
+        </div>
+        <div class="form-group col-md-4">
+          <label for="inputTimeTo">Время снятия стартовой цены до</label>
+          <input type="time" class="form-control" id="inputTimeTo">
+        </div>
+        <div class="form-group col-md-4">
+          <label for="timeToClose">Время авто-закрытия сделок</label>
+          <input type="time" class="form-control" id="timeToClose">
+        </div>
+
+
+        <div class="form-group col-md-6">
+          <label for="triggerStart">Триггер для лимита вход +-,%</label>
+          <input type="number" class="form-control" id="triggerStart">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="triggerStop">Триггер для лимита выход по стопу +-,%</label>
+          <input type="number" class="form-control" id="triggerStop">
+        </div>
+
+        <div class="form-group col-md-6">
+          <label for="stopLMT">Ограничение сдвига лимита +-,% от IV</label>
+          <input type="number" class="form-control" id="stopLMT">
+        </div>
+        <form action="myform.php" method="post">
+          <input type="radio" name="response" value="yes">Отключить верхний триггер<br>   <!--ИЗМЕНИТЬ VALUE-->
+          <input type="radio" name="response" value="no">Отключить нижний триггер
+        </form>
+
+        <div class="form-group col-md-6">
+          <label for="orderStopIV">Лимит ордер для выхода по профиту, % к IV</label>
+          <input type="number" class="form-control" id="orderStopIV">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="orderStopObiem">Лимит ордер для выхода по профиту, объем в %</label>
+          <input type="number" class="form-control" id="orderStopObiem">
+        </div>
+      </div>
+
+
+      <a class="btn btn-primary" href="{{ url_for('index') }}" role="button">Назад</a>
+<!--      <button type="reset" class="btn btn-primary" >Отмена</button>-->
+      <button type="submit" class="btn btn-primary">Добавить ?Отправляется запрос на сервер IB и создается новая запись в index.html?</button>
+    </form>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+</body>
+</html>

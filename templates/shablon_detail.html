@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ shablon.title }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+</head>
+<body>
+    <div class="container">
+        <div align="left">
+            {{ shablon.title }}
+        </div>
+    </div>
+
+
+
+    <form>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="inputNewTemplate">Название шаблона</label>
+          <input type="text" value="{{ shablon.title }}" class="form-control" id="inputNewTemplate">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="inputTimeFrom">Время снятия стартовой цены от</label>
+          <input type="time" value="{{ shablon.TimeFrom }}" class="form-control" id="inputTimeFrom">
+        </div>
+        <div class="form-group col-md-2">
+          <label for="inputTimeTo">Время снятия стартовой цены до</label>
+          <input type="time" value="{{ shablon.TimeTo }}" class="form-control" id="inputTimeTo">
+        </div>
+
+        <div class="form-group col-md-6">
+          <label for="triggerStart">Триггер для лимита вход +-,%</label>
+          <input type="number" value="{{ shablon.triggerStart }}" class="form-control" id="triggerStart">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="triggerStop">Триггер для лимита выход по стопу +-,%</label>
+          <input type="number" value="{{ shablon.triggerStop }}" class="form-control" id="triggerStop">
+        </div>
+
+        <div class="form-group col-md-6">
+          <label for="orderStopIV">Лимит ордер для выхода по профиту, % к IV</label>
+          <input type="number" value="{{ shablon.orderStopIV }}" class="form-control" id="orderStopIV">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="orderStopObiem">Лимит ордер для выхода по профиту, объем в %</label>
+          <input type="number" value="{{ shablon.orderStopObiem }}" class="form-control" id="orderStopObiem">
+        </div>
+
+        <div class="form-group col-md-6">
+          <label for="risk">Риск на сделку, в %</label>
+          <input type="number" value="{{ shablon.risk }}" class="form-control" id="risk">
+        </div>
+        <div class="form-group col-md-6">
+          <label for="timeToClose">Время авто-закрытия сделок</label>
+          <input type="time" value="{{ shablon.timeToClose }}" class="form-control" id="timeToClose">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">?????Кнопка для перехода к заполнению сделки</button>
+
+    </form>
+
+    <p>
+      <form method="post" action="{{ url_for('remove', slug=shablon.slug) }}">
+      <button type="submit" class="btn btn-primary">Удалить</button>
+      </form>
+    </p>
+
+</body>
+</html>

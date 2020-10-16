@@ -1,0 +1,83 @@
+from ibapi.client import EClient
+from ibapi.wrapper import EWrapper
+# import threading
+from ibapi.contract import Contract
+from ibapi.order import *
+from threading import Timer
+
+
+
+
+class TestApp(EWrapper, EClient):
+    def __init__(self):
+        EClient.__init__(self, self)
+
+    def error(self, reqId, errorCode, errorString):
+        print("Error: ", reqId, " ", errorCode, " ", errorString)
+
+    def nextValidId(self, orderId:int):
+        self.nextOrderId = orderId
+        self.start()
+
+    def orderStatus(self, orderId, status, filled,
+                    remaining, avgFillPrice, permId,
+                    parentId, lastFillPrice, clientId,
+                    whyHeld, mktCapPrice):
+        print('OrderStatus. Id:', orderId, ', Status: ', status, ', Filled', filled,
+                    ', Remaining', remaining, ', LastFillPrice', lastFillPrice)
+
+    def openOrder(self, orderId, contract, order,
+                  orderState):
+        print('OpenOrder. ID:', orderId, contract.symbol, contract.secType, '@', contract.exchange, ':',
+              order.action, order.orderType, order.totalQuantity,
+                  orderState.status)
+
+    def execDetails(self, reqId, contract, execution):
+        print('ExecDetails. ', reqId, contract.symbol, contract.secType, contract.currency,
+              execution.execId, execution.orderId, execution.shares, execution.lastLiquidity)
+
+    def start(self):
+        contract1 = Contract()
+        # contract2 = Contract()
+        # contract3 = Contract()
+
+        contract1.symbol = "EUR"  # Контракт на валютную пару EUR.GBP
+        contract1.secType = "CASH"
+        contract1.currency = "USD"
+        contract1.exchange = "IDEALPRO"
+
+        # contract2.symbol = "GBP"  # Контракт на акцию Interactive Brokers
+        # contract2.secType = "CASH"
+        # contract2.currency = "USD"
+        # contract2.exchange = "IDEALPRO"
+        #
+        # contract3.symbol = "AUD"  # Контракт на акцию Interactive Brokers
+        # contract3.secType = "CASH"
+        # contract3.currency = "USD"
+        # contract3.exchange = "IDEALPRO"
+
+        order1 = Order()
+        order1.action = 'BUY'
+        order1.totalQuantity = 20000 #?????????
+        order1.orderType = "LMT"
+        order1.lmtPrice = 1.18285 #??????????
+
+        self.placeOrder(self.nextOrderId, contract1, order1)
+
+    def stop(self):
+        self.done = True
+        self.disconnect()
+
+
+def main():
+    app = TestApp()
+    app.nextOrderId = 0
+    app.connect('127.0.0.1', 7497, 100)
+
+    #call stop() after 3sec. to disconnect
+    Timer(3, app.stop).start()
+    app.run()
+
+
+if __name__ == '__main__':
+    main()
