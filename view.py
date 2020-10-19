@@ -1,3 +1,5 @@
+import sys
+
 from app import app
 from flask import render_template
 from models import Shablon
@@ -6,12 +8,23 @@ from flask import request
 from app import db
 from flask import redirect
 from flask import url_for
+import logging
 import traceback
+
 
 
 @app.route('/') #главная страница со списком сделок(портфель)...добавить интерфейсное окно Логов?????????????
 def index():
     return render_template('index.html')
+
+
+@app.route('/log')
+def get_console_handler():
+
+    trace = open('mylog.log', 'r', encoding="utf-8")
+    return render_template('intro.html', title="Лог", trace=trace.read())
+
+
 
 
 @app.route('/settings', methods=["POST", "GET"]) #страница создания шаблонов и выбора существующих

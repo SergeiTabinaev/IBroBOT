@@ -1,10 +1,31 @@
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
 # import threading
+# import time
 from ibapi.contract import Contract
 from ibapi.order import *
 from threading import Timer
 
+
+#orders/basic orders / stop limit
+#               order = Order()
+#               order.action = action
+#               order.orderType = "STP LMT"
+#               order.totalQuantity = quantity
+#               order.lmtPrice = limitPrice
+#               order.auxPrice = stopPrice
+
+#Order Management/ Placing Orders
+#                  / Modifying Orders
+#                 /  Cancelling Orders
+
+
+# возможно ч-з фласк @app.route в телеграмме в веб хуками
+# написать ф-ю выбор contracta (1, 2 или 3)
+# получить цену?????????
+# написать ф-ю выбор ордера (купить продать)
+# в place order вписать данные ф-и
+    # ввод ф-и реализовать в другом файле
 
 
 
@@ -81,3 +102,165 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# =====================================================================================
+#
+# import ibapi.wrapper
+# import ibapi.client
+# import ibapi.contract  # Contract - интересующий сейчас класс
+# import threading
+# import time  # модуль времени из стандартной библ-ки Python
+#
+#
+# # Класс-наследник EWrapper
+# class MyWrapper(ibapi.wrapper.EWrapper):
+#     # Добавлен инициализатор объекта
+#     def __init__(self):
+#         self.nvid = 0  # переменная для next valid order id
+#         self.con_detail_recive = False  # Флаг для полученного контракта
+#
+#     # Переписан базовый метод .nextValidId()
+#     def nextValidId(self, orderId: int):
+#         super().nextValidId(orderId)
+#         self.nvid = orderId  # записываем значение next valid order id
+#
+#     # Метод, который принимает ответ на запрос деталей контракта
+#     def contractDetails(self, reqId: int, contractDetails: ibapi.contract.ContractDetails):
+#         # Выводим все параметры объекта и их значения
+#         for arg in dir(contractDetails):  # Обходим все атрибуты объекта contractDetails
+#             if not arg.startswith('_'):  # Исключаем приватные атрибуты
+#                 val = getattr(contractDetails, arg)  # Значение конкретного атрибута
+#                 print("{} = {}".format(arg, val))  # Печатаем атрибут и его значение
+#
+#     # Метод, завершающий прием ответа на запрос деталей контракта
+#     def contractDetailsEnd(self, reqId: int):
+#         self.con_detail_recive = True
+#         print("Закончили принимать параметры контракта")  # Печатаем статус
+#
+#
+# # Создаем необходимые объекты
+# tws = ibapi.client.EClient(MyWrapper())  # Объект класса Eclient
+# cnt = ibapi.contract.Contract()  # Объект класса Contract
+#
+# # Контракт на валютную пару EUR.USD
+# cnt.symbol = "EUR"
+# cnt.secType = "CASH"
+# cnt.currency = "USD"
+# cnt.exchange = "IDEALPRO"
+#
+# tws.connect("127.0.0.1", 7497, 100)  # подключаемся к терминалу
+#
+# if tws.isConnected():  # В случе успешного подключения к TWS
+#     th = threading.Thread(target=tws.run)  # Организовываем поток
+#     th.start()  # Запускаем потоки
+#
+#     while tws.wrapper.nvid == 0:  # Пока TWS не прислал Next Valid ID
+#         time.sleep(.5)  # Спим полсекунды
+#
+#     tws.reqContractDetails(tws.wrapper.nvid, cnt)  # Запрашиваем все необходимые данные по контракту
+#     while not tws.wrapper.con_detail_recive:  # Ждем получение ...
+#         time.sleep(.2)  # ... деталей контракта
+#
+#     tws.done = True  # Переводим флаг отключения
+#     while tws.done:  # Ждем пока произойдет ...
+#         time.sleep(.2)  # ... отключение от TWS
+#
+#     print("----- !!!THE END!!! -----")
+#
+#
+# ==========================================================================================
+#
+# # # Класс-наследник EWrapper
+# # class MyWrapper(EWrapper):
+# #     # Добавлен инициализатор объекта
+# #     def __init__(self):
+# #         self.nvid = 0  # Будем записывать Next Valid Identifier
+# #         self.end_work_with_TWS = False  # "Флаг" для отключения от TWS
+# #
+# #     # Переписан базовый метод .error()
+# #     def error(self, reqId: int, errorCode: int, errorString: str):
+# #         if reqId != -1:  # Если это не ошибка из служебной информации при подключении
+# #             print(f"[{reqId}] код: {errorCode} || {errorString}")  # Печатаем ее
+# #
+# #     # Переписан базовый метод .connectAck()
+# #     def connectAck(self):
+# #         print("connectAck(): подключение установлено")  # "Принтуем", что метод сработал
+# #
+# #     # Переписан базовый метод .nextValidId()
+# #     def nextValidId(self, orderId: int):
+# #         self.nvid = orderId  # Сохраняем Next Valid ID в собственный атрибут
+# #         print("nextValidId(): новый ID = {}".format(self.nvid))  # "Принтуем", что метод сработал
+# #
+# #     # Переписан базовый метод .connectionClosed()
+# #     def connectionClosed(self):
+# #         print("connectionClosed(): отключились от терминала")  # "Принтуем", что метод сработал
+# #         self.end_work_with_TWS = True  # Устанавливаем собственный флаг отключения от терминала
+# #
+# #
+# # # Запускаем работу с Trader Workstation
+# # tws = EClient(
+# #     MyWrapper())  # Инициализируем EClient, объект класса EWrapper создаем "на лету", в момент передачи в EClient.
+# # tws.connect("127.0.0.1", 7497, 100)  # Подключаемся к терминалу
+# #
+# # # Работаем в случае успешного подключения к терминалу
+# # if tws.isConnected():
+# #     # Организовываем очередь для метода .run()
+# #     th = threading.Thread(target=tws.run)  # Инициализируем очередь
+# #     th.start()  # Запускаем очередь
+# #
+# #     # Сейчас засыпаем, дав терминалу время поработать
+# #     print("Основной поток засыпает на 10 секунд.")  # "Принтуем", что сейчас будем спать
+# #     time.sleep(10)  # Спим 10 секунд
+# #
+# #     # А теперь отключаемся от терминала
+# #     tws.done = True  # Переключаем внутренний флаг в EClient
+# #     while tws.done and not tws.wrapper.end_work_with_TWS:  # Ждем в бесконечном цикле, пока флаги не примут нужные значения
+# #         print("Жду отключения от терминала")  # "Принтуем", что ждем
+# #         time.sleep(.5)
+#
+#
+# ===============================================================================
+#
+#
+#
+#
+#
+#     # wrp = EWrapper()
+# # cln = EClient(wrp)
+# # cln.connect("127.0.0.1", 7497, 100)
+# #
+# # if cln.isConnected():
+# #     print("Успешно подключились к TWS")
+# #     cln.th = threading.Thread(target=cln.run)
+# #     cln.th.start()
+# #     cln.th.join(timeout=5)
+# #
+# #
+# # cln.disconnect()
+
