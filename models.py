@@ -17,10 +17,8 @@ class Shablon(db.Model):   # модель шаблона для заполнен
     id = Column(Integer, primary_key=True)
     title = Column(String(140))
     slug = Column(String(140), unique=True)  # типа айди каждого сохраненного шаблона для заполнения
-    # TimeFrom = Column(Time, nullable=False)  # Время снятия стартовой цены от , blank=True
-    # TimeTo = Column(Time, nullable=False)  # Время снятия стартовой цены до
-    TimeFrom = Column(String, nullable=False, default=None)
-    TimeTo = Column(String, nullable=False, default=None)
+    TimeFrom = Column(String, nullable=False, default=None) # Время снятия стартовой цены от , blank=True
+    TimeTo = Column(String, nullable=False, default=None) # Время снятия стартовой цены до
     triggerStart = Column(Float, nullable=False, default=None)  # Триггер для лимита вход +-, %
     triggerStop = Column(Float, nullable=False, default=None)  # Триггер для лимита выход по стопу +-, %
     orderStopIV = Column(Float, nullable=False, default=None)  # Лимит ордер для выхода по профиту, % к IV
