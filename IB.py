@@ -62,7 +62,7 @@ class TestApp(EWrapper, EClient):
     pricer = open('price.txt', 'r')
     price = float(pricer.read())  # bid or ask price from def tickPrice
     tiker = dictForm['tiker']
-    # print(tiker)
+    print(tiker)
     IVvolativ = float(dictForm['IVvolativ']) #0.08
     entryTrigger = float(dictForm['entryTrigger']) #0.0000001
     dropAssets = 1000000
