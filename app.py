@@ -15,8 +15,6 @@ app.config.from_object(Configuration)
 
 
 ####################################################
-# if (os.stat('fileForm.json')).st_size == 0:
-#     onlyConnect() #только коннект
 
 runIB() #ордер на покупку
 
@@ -25,7 +23,6 @@ runIB() #ордер на покупку
 
 # logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s', level=logging.DEBUG, filename=u'mylog.log')
 ## sys.stderr = open('log.txt', 'w')
-#выяснить как спарсить ERROR -1 из API
 
 ######################################################
 
