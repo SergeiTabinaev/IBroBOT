@@ -1,6 +1,6 @@
 from app import db
 import re
-from sqlalchemy import Column, String, Integer, DateTime, Time
+from sqlalchemy import Column, String, Integer, DateTime, Time, Float
 from datetime import datetime
 # timestamp = datetime.today().timestamp()
 # print(timestamp)
@@ -21,11 +21,11 @@ class Shablon(db.Model):   # модель шаблона для заполнен
     # TimeTo = Column(Time, nullable=False)  # Время снятия стартовой цены до
     TimeFrom = Column(String, nullable=False, default=None)
     TimeTo = Column(String, nullable=False, default=None)
-    triggerStart = Column(Integer, nullable=False, default=None)  # Триггер для лимита вход +-, %
-    triggerStop = Column(Integer, nullable=False, default=None)  # Триггер для лимита выход по стопу +-, %
-    orderStopIV = Column(Integer, nullable=False, default=None)  # Лимит ордер для выхода по профиту, % к IV
-    orderStopObiem = Column(Integer, nullable=False, default=None)  # Лимит ордер для выхода по профиту, объем в %
-    risk = Column(Integer, nullable=False, default=None)  # Риск на сделку, в %
+    triggerStart = Column(Float, nullable=False, default=None)  # Триггер для лимита вход +-, %
+    triggerStop = Column(Float, nullable=False, default=None)  # Триггер для лимита выход по стопу +-, %
+    orderStopIV = Column(Float, nullable=False, default=None)  # Лимит ордер для выхода по профиту, % к IV
+    orderStopObiem = Column(Float, nullable=False, default=None)  # Лимит ордер для выхода по профиту, объем в %
+    risk = Column(Float, nullable=False, default=None)  # Риск на сделку, в %
     # timeToClose = Column(Time, nullable=False)  # Время авто-закрытия сделок
     timeToClose = Column(String, nullable=False, default=None)
 

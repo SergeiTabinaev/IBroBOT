@@ -1,15 +1,22 @@
 import sys
+import os
+
+from threading import Timer
+from multiprocessing import Process
+
 
 from app import app
 from flask import render_template
 from models import Shablon
-from forms import ShablonForm
+from forms import ShablonForm, DealForm
 from flask import request
 from app import db
 from flask import redirect
 from flask import url_for
-import logging
 import traceback
+import json
+import importlib
+import IB
 
 
 
@@ -17,11 +24,9 @@ import traceback
 def index():
     return render_template('index.html')
 
-
 @app.route('/log')
 def get_console_handler():
-
-    trace = open('mylog.log', 'r', encoding="utf-8")
+    trace = open('mylog.txt', 'r', encoding="utf-8")
     return render_template('intro.html', title="Лог", trace=trace.read())
 
 
@@ -76,12 +81,42 @@ def shablon_detail(slug):
     return render_template('shablon_detail.html', shablon=shablon)
 
 
-
-@app.route('/add') #добавление записей(сделок) в портфель
+@app.route('/add', methods=["POST", "GET"]) #добавление записей(сделок) в портфель
 def add_deal():
-    return render_template('add_deal.html')
+    if request.method == 'POST':
+        # TestApp.tiker = request.form['tiker']
+        dictForm = {}
+        vtiker = request.form['tiker']
+        dictForm['tiker']=vtiker
+        vIVvolativ = request.form['IVvolativ']
+        dictForm['IVvolativ'] = vIVvolativ
+        vriskTrade = request.form['risk']
+        dictForm['riskTrade'] = vriskTrade
+        vgoodAfterTime = request.form['TimeFrom']
+        dictForm['goodAfterTime'] = vgoodAfterTime
+        vgoodTillDate = request.form['TimeTo']
+        dictForm['goodTillDate'] = vgoodTillDate
+        vtimeToClose = request.form['timeToClose'] #?????????????
+        dictForm['timeToClose'] = vtimeToClose
+        ventryTrigger = request.form['triggerStart']
+        dictForm['entryTrigger'] = ventryTrigger
+        vexitTrigger = request.form['triggerStop']
+        dictForm['exitTrigger'] = vexitTrigger
+        vsdvigLimit = request.form['sdvigLimit'] #?????????????
+        dictForm['sdvigLimit'] = vsdvigLimit
+        vorderStopIV = request.form['orderStopIV'] #?????????????
+        dictForm['orderStopIV'] = vorderStopIV
+        vorderStopObiem = request.form['orderStopObiem'] #?????????????
+        dictForm['orderStopObiem'] = vorderStopObiem
+        with open("fileForm.json", 'w') as file_form:
+            json.dump(dictForm, file_form, indent=2, ensure_ascii=False)
 
+        importlib.reload(IB) #презагрузка модуля IB для записи новой сделки
+        # перезагрузка
 
-@app.route('/test')
-def test():
-    return render_template('test_template.html')
+        return render_template('index.html', tiker=vtiker, IVvolativ=vIVvolativ,
+                           goodAfterTime=vgoodAfterTime,
+                           goodTillDate=vgoodTillDate)
+    form = DealForm()
+    return render_template('add_deal.html', form=form)
+

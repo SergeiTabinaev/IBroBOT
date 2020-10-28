@@ -1,0 +1,13 @@
+{
+  "tiker": "kjgp",
+  "IVvolativ": "0.096",
+  "riskTrade": "0.05",
+  "goodAfterTime": "20201026 12:31:59",
+  "goodTillDate": "20201026 14:31:59",
+  "timeToClose": "",
+  "entryTrigger": "0.0000001",
+  "exitTrigger": "10",
+  "sdvigLimit": "",
+  "orderStopIV": "",
+  "orderStopObiem": ""
+}

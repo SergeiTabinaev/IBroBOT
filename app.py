@@ -1,9 +1,11 @@
+import os
+
 from flask import Flask
 from config import Configuration
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
-from IB import *
+from IB import runIB
 import sys
 import logging
 
@@ -11,9 +13,11 @@ import logging
 app = Flask(__name__)
 app.config.from_object(Configuration)
 
-####################################################
 
-# onlyConnect() #только коннект
+####################################################
+# if (os.stat('fileForm.json')).st_size == 0:
+#     onlyConnect() #только коннект
+
 runIB() #ордер на покупку
 
 

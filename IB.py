@@ -1,76 +1,116 @@
-from ibapi import order_condition
+import os
+
+from flask import request
 from ibapi.client import EClient
-from ibapi.order_condition import PriceCondition, OrderCondition
 from ibapi.wrapper import EWrapper
 import threading
-from ibapi.contract import Contract
-from ibapi.order import *
 from threading import Timer
 from ibapi.ticktype import TickTypeEnum
-# import datetime
-
+import datetime
+import json
 
 # types
-from ibapi.common import * # @UnusedWildImport
-from ibapi.order_condition import * # @UnusedWildImport
 from ibapi.contract import * # @UnusedWildImport
 from ibapi.order import * # @UnusedWildImport
-from ibapi.order_state import * # @UnusedWildImport
-from ibapi.execution import Execution
-from ibapi.execution import ExecutionFilter
-from ibapi.commission_report import CommissionReport
 from ibapi.ticktype import * # @UnusedWildImport
-from ibapi.tag_value import TagValue
+# from view import vtiker, vIVvolativ, vriskTrade, vgoodAfterTime, vgoodTillDate, vtimeToClose, ventryTrigger, vexitTrigger, vsdvigLimit, vorderStopIV, vorderStopObiem
 
-from ibapi.account_summary_tags import *
 
-from samples.ContractSamples import ContractSamples
-from samples.OrderSamples import OrderSamples
-from samples.AvailableAlgoParams import AvailableAlgoParams
-from samples.ScannerSubscriptionSamples import ScannerSubscriptionSamples
-from samples.FaAllocationSamples import FaAllocationSamples
-from ibapi.scanner import ScanData
+
+
+# buyTrigger. триггер на покупку
+# dropAssets. ликвидационные активы. (например 1000000)
+# IVvolativ. IV-ожидаемая волатильность %. (например 0.08% eur-usd от0до55 %)
+# riskTrade. Риск на сделку. (например 0.03%)
+# entryTrigger. Триггер для лимита входа -+%. (например 0.0000001%)
+# exitTrigger. Триггер лимита выхода по стопу -+%.  (например 10%)
+
+
+#триггер на покупку = первичная цена + (первичная цена * IVожидаемая волативность * триггер лимита на вход%)
+# buyTrigger = price + (price * IVvolativ * entryTrigger)
+
+# объем ордера = ликвидационные активы * риск на сделку / триггер на покупку * триггер для лимита выход по стопу * IVожидаемая волативность
+# 10000 * 0,003 / 20 * 10% * 55% = 240акций
+# MyTotalQuantity = dropAssets * riskTrade / buyTrigger * exitTrigger * IVvolativ
+
 
 
 
 class TestApp(EWrapper, EClient):
+
+
+    # dictForm0 = {'tiker': '', 'IVvolativ': float(),
+    #     'riskTrade': float(), 'goodAfterTime': '',
+    #     'goodTillDate': '', 'timeToClose': '',
+    #     'entryTrigger': float(), 'exitTrigger': float(),
+    #     'sdvigLimit': float(), 'orderStopIV': float(), 'orderStopObiem': float()}
+    # with open("fileForm.json", 'w') as file_form:
+    #     json.dump(dictForm0, file_form, indent=2, ensure_ascii=False)
+
+    try: #таймер ниже по коду очищает fileForm.json(данные для новой записи) чтоб при запуске не было отправки старой записи
+        with open("fileForm.json", 'r') as file_form:
+            dictForm = json.load(file_form)
+    except: #чтоб не выдавало ошибку пустого fileForm.json(данные для новой записи), создаем пустой словарь
+        dictForm = {'tiker': '', 'IVvolativ': float(),
+            'riskTrade': float(), 'goodAfterTime': '',
+            'goodTillDate': '', 'timeToClose': '',
+            'entryTrigger': float(), 'exitTrigger': float(),
+            'sdvigLimit': float(), 'orderStopIV': float(), 'orderStopObiem': float()}
+        with open("fileForm.json", 'w') as file_form:
+            json.dump(dictForm, file_form, indent=2, ensure_ascii=False)
+
+    pricer = open('price.txt', 'r')
+    price = float(pricer.read())  # bid or ask price from def tickPrice
+    tiker = dictForm['tiker']
+    # print(tiker)
+    IVvolativ = float(dictForm['IVvolativ']) #0.08
+    entryTrigger = float(dictForm['entryTrigger']) #0.0000001
+    dropAssets = 1000000
+    riskTrade = float(dictForm['riskTrade']) #0.03
+    exitTrigger = float(dictForm['exitTrigger']) #10
+    buyTrigger = price + (price * IVvolativ * entryTrigger)
+    buyTrigger = round(buyTrigger, 5)
+    if buyTrigger != 0:
+        if exitTrigger != 0:
+            if IVvolativ != 0:
+                MyTotalQuantity = int((dropAssets * riskTrade) / (buyTrigger * exitTrigger * IVvolativ))
+    goodAfterTime = dictForm['goodAfterTime'] #"20201026 12:31:59"
+    goodTillDate = dictForm['goodTillDate'] #"20201026 14:31:59"
+
+    file_log = open("mylog.txt", 'a')
+    # file_error = open("checkError.json", 'w')
+
     def __init__(self):
         EClient.__init__(self, self)
 
     def error(self, reqId, errorCode, errorString):
+        self.file_log.writelines(errorString + '\n' + '<br />')
+        # json.dump(errorCode, self.file_error, indent=2, ensure_ascii=False)
         print("Error: ", reqId, " ", errorCode, " ", errorString)
-
 
     def tickPrice(self, reqId, tickType, price, attrib):
         # print("TickPrice. Ticker Id:", reqId, "tickType:", TickTypeEnum.to_str(tickType), "Price:", price, end=' ')
-        # return price
-        if TickTypeEnum.to_str(tickType) == 'BID':
+        if TickTypeEnum.to_str(tickType) == 'ASK':
             with open("price.txt", 'w') as file_price:
                 file_price.write(str(price))
     #self.reqMarketDataType
     #self.reqMktData
 
-    def contractDetails(self, reqId, contractDetails):
-        # print('contractDetails: ', reqId, "", contractDetails)
-        pass
-    #self.reqContractDetails
-
     def nextValidId(self, orderId:int):
         self.nextOrderId = orderId
         self.start()
 
-    def orderStatus(self, orderId, status, filled,
-                    remaining, avgFillPrice, permId,
-                    parentId, lastFillPrice, clientId,
-                    whyHeld, mktCapPrice):
+    def orderStatus(self, orderId, status, filled, remaining,
+                    avgFillPrice, permId, parentId, lastFillPrice,
+                    clientId, whyHeld, mktCapPrice):
+        self.file_log.writelines(status + '\n' + '<br />')
         print('OrderStatus. Id:', orderId, ', Status: ', status, ', Filled', filled,
-                    ', Remaining', remaining, ', LastFillPrice', lastFillPrice)
+              ', Remaining', remaining, ', LastFillPrice', lastFillPrice)
 
-    def openOrder(self, orderId, contract, order,
-                  orderState):
+    def openOrder(self, orderId, contract, order, orderState):
+        self.file_log.writelines(order.action + '\n' + '<br />')
         print('OpenOrder. ID:', orderId, contract.symbol, contract.secType, '@', contract.exchange, ':',
-              order.action, order.orderType, order.totalQuantity,
-                  orderState.status)
+              order.action, order.orderType, order.totalQuantity, orderState.status)
     #self.placeOrder
 
     def execDetails(self, reqId, contract, execution):
@@ -80,28 +120,36 @@ class TestApp(EWrapper, EClient):
     def start(self):
         contract1 = Contract()
 
-        contract1.symbol = "EUR"  # Контракт на валютную пару EUR.GBP
+        contract1.symbol = "EUR"
         contract1.secType = "CASH"
         contract1.currency = "USD"
         contract1.exchange = "IDEALPRO"
 
         self.reqMarketDataType(4) #if life is not available to switch to delayed-frozen data
         self.reqMktData(1, contract1, '', False, False, [])
-        self.reqContractDetails(1, contract1)
+
+        # with open("checkError.json", "r") as me:
+        #     myError = str(json.load(me))
+        # if myError.__contains__('110') == True:
+        #     print(myError)
 
 
-        price = open('price.txt', 'r')
-        price = price.read()
+        #price = self.price #float(price.read())
+        buyTrigger = self.buyTrigger #price + (price * self.IVvolativ * self.entryTrigger)
+        buyTrigger = round(buyTrigger, 5)
+        MyTotalQuantity = self.MyTotalQuantity #int((self.dropAssets * self.riskTrade) / (buyTrigger * self.exitTrigger * self.IVvolativ))
+
+        print(buyTrigger)
+        print(MyTotalQuantity)
 
         order1 = Order()
         order1.action = 'BUY' #SELL
         order1.tif = "GTD"
-        order1.goodAfterTime = "20201022 12:31:59"  # util.formatIBDatetime  может   использоваться   для    форматирования даты и    времени.
-        order1.goodTillDate = "20201022 14:31:59"
-        order1.totalQuantity = 20000 #?????????
+        order1.goodAfterTime = self.goodAfterTime #"20201024 12:31:59"  # util.formatIBDatetime  can be using for  форматирования даты и    времени.
+        order1.goodTillDate = self.goodTillDate #"20201024 14:31:59"
+        order1.totalQuantity = MyTotalQuantity #20000
         order1.orderType = "LMT"
-        order1.lmtPrice = price   #BID price из def tickPrice
-        # order1.conditions.append(OrderSamples.TimeCondition("20201022 14:31:59", True, False))
+        order1.lmtPrice = buyTrigger #BID price из def tickPrice
         self.placeOrder(self.nextOrderId, contract1, order1)
 
 
@@ -109,15 +157,30 @@ class TestApp(EWrapper, EClient):
         self.done = True
         self.disconnect()
 
+    def timerDel(self):
+        with open('fileForm.json', 'wb'):
+            pass
+
 
 def runIB():
     appIB = TestApp()
     appIB.nextOrderId = 0
     appIB.connect('127.0.0.1', 7497, 100)
-
+    Timer(2, appIB.timerDel).start()
     #сказать stop() after 3sec. to disconnect
     Timer(3, appIB.stop).start()
     appIB.run()
+
+# def onlyConnect():
+#     wrp = EWrapper()
+#     cln = EClient(wrp)
+#     cln.connect("127.0.0.1", 7497, 100)
+#
+#     if cln.isConnected():
+#         print("Успешно подключились к TWS")
+#         cln.th = threading.Thread(target=cln.run)
+#         cln.th.start()
+#         cln.th.join(timeout=5)
 
 
 
@@ -125,7 +188,8 @@ def runIB():
 
 # done  1.при первом запуске (run) идет только подключение к TWS
 # done  2.далее проверка есть ли в списке задач, задача с подходящи временем
-# если время подходящее то идет запуск задачи по покупке или продаже тикера по "стартовой цене"
+#         если время подходящее то идет запуск задачи по покупке или продаже тикера по "стартовой цене"
+# ордера на покупку (тригер на покупку)
 
 
 # Основное описание бота:
