@@ -111,8 +111,8 @@ def add_deal():
         with open("fileForm.json", 'w') as file_form:
             json.dump(dictForm, file_form, indent=2, ensure_ascii=False)
 
-        importlib.reload(IB) #презагрузка модуля IB для записи новой сделки
-        # перезагрузка
+        importlib.reload(IB) #перезагрузка модуля IB для записи новой сделки
+
 
         return render_template('index.html', tiker=vtiker, IVvolativ=vIVvolativ,
                            goodAfterTime=vgoodAfterTime,
