@@ -39,14 +39,6 @@ from ibapi.ticktype import * # @UnusedWildImport
 class TestApp(EWrapper, EClient):
 
 
-    # dictForm0 = {'tiker': '', 'IVvolativ': float(),
-    #     'riskTrade': float(), 'goodAfterTime': '',
-    #     'goodTillDate': '', 'timeToClose': '',
-    #     'entryTrigger': float(), 'exitTrigger': float(),
-    #     'sdvigLimit': float(), 'orderStopIV': float(), 'orderStopObiem': float()}
-    # with open("fileForm.json", 'w') as file_form:
-    #     json.dump(dictForm0, file_form, indent=2, ensure_ascii=False)
-
     try: #таймер ниже по коду очищает fileForm.json(данные для новой записи) чтоб при запуске не было отправки старой записи
         with open("fileForm.json", 'r') as file_form:
             dictForm = json.load(file_form)
@@ -55,7 +47,7 @@ class TestApp(EWrapper, EClient):
             'riskTrade': float(), 'goodAfterTime': '',
             'goodTillDate': '', 'timeToClose': '',
             'entryTrigger': float(), 'exitTrigger': float(),
-            'sdvigLimit': float(), 'orderStopIV': float(), 'orderStopObiem': float()}
+            'sdvigLimit': float(), 'orderStopIV': float(), 'orderStopObiem': float(), 'BUYorSELL': 0}
         with open("fileForm.json", 'w') as file_form:
             json.dump(dictForm, file_form, indent=2, ensure_ascii=False)
 
@@ -65,15 +57,15 @@ class TestApp(EWrapper, EClient):
     print(tiker)
     IVvolativ = float(dictForm['IVvolativ']) #0.08
     entryTrigger = float(dictForm['entryTrigger']) #0.0000001
-    dropAssets = 1000000
+    dropAssets = 500000
     riskTrade = float(dictForm['riskTrade']) #0.03
     exitTrigger = float(dictForm['exitTrigger']) #10
     buyTrigger = price + (price * IVvolativ * entryTrigger)
     buyTrigger = round(buyTrigger, 5)
-    if buyTrigger != 0:
-        if exitTrigger != 0:
-            if IVvolativ != 0:
-                MyTotalQuantity = int((dropAssets * riskTrade) / (buyTrigger * exitTrigger * IVvolativ))
+    try:
+        MyTotalQuantity = int((dropAssets * riskTrade) / (buyTrigger * exitTrigger * IVvolativ))
+    except:
+        MyTotalQuantity = 0
     goodAfterTime = dictForm['goodAfterTime'] #"20201026 12:31:59"
     goodTillDate = dictForm['goodTillDate'] #"20201026 14:31:59"
 
@@ -143,7 +135,10 @@ class TestApp(EWrapper, EClient):
         print(MyTotalQuantity)
 
         order1 = Order()
-        order1.action = 'BUY' #SELL
+        if self.dictForm['BUYorSELL'] == 0:
+            order1.action = 'BUY'
+        else:
+            order1.action = 'SELL'
         order1.tif = "GTD"
         order1.goodAfterTime = self.goodAfterTime #"20201024 12:31:59"  # util.formatIBDatetime  can be using for  форматирования даты и    времени.
         order1.goodTillDate = self.goodTillDate #"20201024 14:31:59"
