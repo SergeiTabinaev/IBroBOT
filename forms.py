@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, FloatField, SubmitField, IntegerField, TimeField
+from wtforms import Form, StringField, FloatField, SubmitField, IntegerField, TimeField, SelectField
 
 
 
@@ -31,5 +31,7 @@ class DealForm(Form):
     #     (1, 'Выкл нижний')
     orderStopIV = FloatField('Лимит ордер для выхода по профиту, % к IV')
     orderStopObiem = FloatField('Лимит ордер для выхода по профиту, объем в %')
-
+    BUYorSELL = SelectField('BUYorSELL', coerce=int, choices=[
+        (0, 'BUY'),
+        (1, 'SELL')])
 
