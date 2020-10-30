@@ -1,3 +1,4 @@
+import multiprocessing
 import sys
 import os
 
@@ -6,7 +7,7 @@ from multiprocessing import Process
 
 
 from app import app
-from flask import render_template
+from flask import render_template, Flask
 from models import Shablon
 from forms import ShablonForm, DealForm
 from flask import request
@@ -17,6 +18,7 @@ import traceback
 import json
 import importlib
 import IB
+
 
 
 
@@ -108,13 +110,21 @@ def add_deal():
         dictForm['orderStopIV'] = vorderStopIV
         vorderStopObiem = request.form['orderStopObiem'] #?????????????
         dictForm['orderStopObiem'] = vorderStopObiem
+        vBUYorSELL = request.form['BUYorSELL']
+        dictForm['BUYorSELL'] = vBUYorSELL
         with open("fileForm.json", 'w') as file_form:
             json.dump(dictForm, file_form, indent=2, ensure_ascii=False)
 
-        importlib.reload(IB) #перезагрузка модуля IB для записи новой сделки
+        # importlib.reload(IB) #перезагрузка модуля IB для записи новой сделки
+        appIB = IB.TestApp()
+        appIB.nextOrderId = 0
+        appIB.connect('127.0.0.1', 7497, 100)
+
+        Timer(3, appIB.stop).start()
+        appIB.run()
 
 
-        return render_template('index.html', tiker=vtiker, IVvolativ=vIVvolativ,
+        return render_template('index.html', tiker=vtiker, BUYorSELL=vBUYorSELL, IVvolativ=vIVvolativ,
                            goodAfterTime=vgoodAfterTime,
                            goodTillDate=vgoodTillDate)
     form = DealForm()
