@@ -18,7 +18,7 @@ import traceback
 import json
 import importlib
 import IB
-
+from IB import TestApp
 
 
 
@@ -30,8 +30,6 @@ def index():
 def get_console_handler():
     trace = open('mylog.txt', 'r', encoding="utf-8")
     return render_template('intro.html', title="Лог", trace=trace.read())
-
-
 
 
 @app.route('/settings', methods=["POST", "GET"]) #страница создания шаблонов и выбора существующих
@@ -112,6 +110,7 @@ def add_deal():
         dictForm['orderStopObiem'] = vorderStopObiem
         vBUYorSELL = request.form['BUYorSELL']
         dictForm['BUYorSELL'] = vBUYorSELL
+
         with open("fileForm.json", 'w') as file_form:
             json.dump(dictForm, file_form, indent=2, ensure_ascii=False)
 
@@ -123,10 +122,11 @@ def add_deal():
         Timer(3, appIB.stop).start()
         appIB.run()
 
+        vsostoynie = open("fileS.txt", 'r')
 
         return render_template('index.html', tiker=vtiker, BUYorSELL=vBUYorSELL, IVvolativ=vIVvolativ,
                            goodAfterTime=vgoodAfterTime,
-                           goodTillDate=vgoodTillDate)
+                           goodTillDate=vgoodTillDate, sostoynie=vsostoynie)
     form = DealForm()
     return render_template('add_deal.html', form=form)
 

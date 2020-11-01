@@ -1,6 +1,3 @@
-import os
-
-from flask import request
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
 import threading
@@ -10,11 +7,9 @@ import datetime
 import json
 
 # types
-from ibapi.contract import * # @UnusedWildImport
-from ibapi.order import * # @UnusedWildImport
-from ibapi.ticktype import * # @UnusedWildImport
-# from view import vtiker, vIVvolativ, vriskTrade, vgoodAfterTime, vgoodTillDate, vtimeToClose, ventryTrigger, vexitTrigger, vsdvigLimit, vorderStopIV, vorderStopObiem
-
+from ibapi.contract import *
+from ibapi.order import *
+from ibapi.ticktype import *
 
 
 
@@ -25,6 +20,10 @@ from ibapi.ticktype import * # @UnusedWildImport
 # entryTrigger. Триггер для лимита входа -+%. (например 0.0000001%)
 # exitTrigger. Триггер лимита выхода по стопу -+%.  (например 10%)
 
+# orderStopIV. лимит ордер для выхода по профиту (тейк профит) % к IV
+# orderStopObiem. Лимит ордер для выхода по профиту, объём в %(объем к предыдущему параметру, на ордер)
+# timeToClose. время авто-закрытия сделок
+
 
 #триггер на покупку = первичная цена + (первичная цена * IVожидаемая волативность * триггер лимита на вход%)
 # buyTrigger = price + (price * IVvolativ * entryTrigger)
@@ -32,6 +31,17 @@ from ibapi.ticktype import * # @UnusedWildImport
 # объем ордера = ликвидационные активы * риск на сделку / триггер на покупку * триггер для лимита выход по стопу * IVожидаемая волативность
 # 10000 * 0,003 / 20 * 10% * 55% = 240акций
 # MyTotalQuantity = dropAssets * riskTrade / buyTrigger * exitTrigger * IVvolativ
+
+
+#==============================================================================
+
+# тейк профит(ордер лимитный на продажу после покупки) - первичная цена + (первичная цена * лимит ордер для выхода по профиту * IV-ожидаемая волатильность)
+# teikprofit = price + (price * orderStopIV * IVvolativ)
+# stopLoss = price + (price * exitTrigger * IVvolativ)
+
+# (Объем ставим из) Лимит ордер для выхода по профиту, объём в % = имеющийся объем(MyTotalQuantity) * Лимит ордер для выхода по профиту, объём в %
+# ProfitMyTotalQuantity = MyTotalQuantity * orderStopObiem
+
 
 
 
@@ -57,19 +67,41 @@ class TestApp(EWrapper, EClient):
     print(tiker)
     IVvolativ = float(dictForm['IVvolativ']) #0.08
     entryTrigger = float(dictForm['entryTrigger']) #0.0000001
-    dropAssets = 500000
+    dropAssets = 1000000
     riskTrade = float(dictForm['riskTrade']) #0.03
     exitTrigger = float(dictForm['exitTrigger']) #10
     buyTrigger = price + (price * IVvolativ * entryTrigger)
     buyTrigger = round(buyTrigger, 5)
+    orderStopObiem = float(dictForm['orderStopObiem'])
+    orderStopIV = float(dictForm['orderStopIV'])
+    takeProfit = price + (price * orderStopIV * IVvolativ)
+    stopLoss = price + (price * exitTrigger * IVvolativ)
+
+
+    if dictForm['tiker'] == 0:
+        contract = Contract()
+        contract.symbol = "EUR"
+        contract.secType = "CASH"
+        contract.currency = "USD"
+        contract.exchange = "IDEALPRO"
+    else:
+        contract = Contract()
+        contract.symbol = "GBP"
+        contract.secType = "CASH"
+        contract.currency = "USD"
+        contract.exchange = "IDEALPRO"
+
     try:
         MyTotalQuantity = int((dropAssets * riskTrade) / (buyTrigger * exitTrigger * IVvolativ))
+        #                      1000000      0.05       /  1.17045      10             0.09
     except:
-        MyTotalQuantity = 0
+        MyTotalQuantity = 40000
+
     goodAfterTime = dictForm['goodAfterTime'] #"20201026 12:31:59"
     goodTillDate = dictForm['goodTillDate'] #"20201026 14:31:59"
 
     file_log = open("mylog.txt", 'a')
+    fileS = open("fileS.txt", 'w')
     # file_error = open("checkError.json", 'w')
 
     def __init__(self):
@@ -82,7 +114,7 @@ class TestApp(EWrapper, EClient):
 
     def tickPrice(self, reqId, tickType, price, attrib):
         # print("TickPrice. Ticker Id:", reqId, "tickType:", TickTypeEnum.to_str(tickType), "Price:", price, end=' ')
-        if TickTypeEnum.to_str(tickType) == 'ASK':
+        if TickTypeEnum.to_str(tickType) == 'CLOSE': #BID ASK HIGH LOW CLOSE
             with open("price.txt", 'w') as file_price:
                 file_price.write(str(price))
     #self.reqMarketDataType
@@ -96,10 +128,12 @@ class TestApp(EWrapper, EClient):
                     avgFillPrice, permId, parentId, lastFillPrice,
                     clientId, whyHeld, mktCapPrice):
         self.file_log.writelines(status + '\n' + '<br />')
-        print('OrderStatus. Id:', orderId, ', Status: ', status, ', Filled', filled,
-              ', Remaining', remaining, ', LastFillPrice', lastFillPrice)
+        # print('OrderStatus. Id:', orderId, ', Status: ', status, ', Filled', filled,
+        #       ', Remaining', remaining, ', LastFillPrice', lastFillPrice)
+
 
     def openOrder(self, orderId, contract, order, orderState):
+        self.fileS.writelines(orderState.status + '\n' + '<br />')
         self.file_log.writelines(order.action + '\n' + '<br />')
         print('OpenOrder. ID:', orderId, contract.symbol, contract.secType, '@', contract.exchange, ':',
               order.action, order.orderType, order.totalQuantity, orderState.status)
@@ -109,24 +143,18 @@ class TestApp(EWrapper, EClient):
         print('ExecDetails. ', reqId, contract.symbol, contract.secType, contract.currency,
               execution.execId, execution.orderId, execution.shares, execution.lastLiquidity)
 
-    def start(self):
-        contract1 = Contract()
+    @staticmethod
+    def BracketOrder(self):
+        contract = self.contract
 
-        contract1.symbol = "EUR"
-        contract1.secType = "CASH"
-        contract1.currency = "USD"
-        contract1.exchange = "IDEALPRO"
+        contract.symbol = contract.symbol
+        contract.secType = contract.secType
+        contract.currency = contract.currency
+        contract.exchange = contract.exchange
 
         self.reqMarketDataType(4) #if life is not available to switch to delayed-frozen data
-        self.reqMktData(1, contract1, '', False, False, [])
+        self.reqMktData(1, contract, '', False, False, [])
 
-        # with open("checkError.json", "r") as me:
-        #     myError = str(json.load(me))
-        # if myError.__contains__('110') == True:
-        #     print(myError)
-
-
-        #price = self.price #float(price.read())
         buyTrigger = self.buyTrigger #price + (price * self.IVvolativ * self.entryTrigger)
         buyTrigger = round(buyTrigger, 5)
         MyTotalQuantity = self.MyTotalQuantity #int((self.dropAssets * self.riskTrade) / (buyTrigger * self.exitTrigger * self.IVvolativ))
@@ -134,18 +162,51 @@ class TestApp(EWrapper, EClient):
         print(buyTrigger)
         print(MyTotalQuantity)
 
-        order1 = Order()
+
+        order = Order()
         if self.dictForm['BUYorSELL'] == 0:
-            order1.action = 'BUY'
+            order.action = 'BUY'
         else:
-            order1.action = 'SELL'
-        order1.tif = "GTD"
-        order1.goodAfterTime = self.goodAfterTime #"20201024 12:31:59"  # util.formatIBDatetime  can be using for  форматирования даты и    времени.
-        order1.goodTillDate = self.goodTillDate #"20201024 14:31:59"
-        order1.totalQuantity = MyTotalQuantity #20000
-        order1.orderType = "LMT"
-        order1.lmtPrice = buyTrigger #BID price из def tickPrice
-        self.placeOrder(self.nextOrderId, contract1, order1)
+            order.action = 'SELL'
+        order.orderId = order.orderId
+        order.tif = "GTD"
+        order.goodAfterTime = self.goodAfterTime #"20201024 12:31:59"  # util.formatIBDatetime  can be using for  форматирования даты и    времени.
+        order.goodTillDate = self.goodTillDate #"20201024 14:31:59"
+        order.totalQuantity = MyTotalQuantity #20000
+        order.orderType = "LMT"
+        order.lmtPrice = buyTrigger #BID price из def tickPrice
+####################
+        order.transmit = False
+        takeProfit = Order()
+        takeProfit.orderId = order.orderId + 1
+        takeProfit.action = "SELL" if order.action == "BUY" else "BUY"
+        takeProfit.orderType = "LMT"
+        takeProfit.totalQuantity = MyTotalQuantity * self.orderStopObiem
+        takeProfit.lmtPrice = self.takeProfit
+        takeProfit.parentId = order.orderId
+        takeProfit.transmit = False
+
+        stopLoss = Order()
+        stopLoss.orderId = order.orderId + 2
+        stopLoss.action = "SELL" if order.action == "BUY" else "BUY"
+        stopLoss.orderType = "STP"
+        # Stop trigger price
+        stopLoss.auxPrice = self.stopLoss
+        stopLoss.totalQuantity = MyTotalQuantity * self.orderStopObiem
+        stopLoss.parentId = order.orderId
+        # In this case, the low side order will be the last child being sent. Therefore, it needs to set this attribute to True
+        # to activate all its predecessors
+        stopLoss.transmit = True
+        bracketOrder = [order, takeProfit, stopLoss]
+        return bracketOrder
+        # self.placeOrder(self.nextOrderId, contract1, order1)
+        # self.bracketSample()
+
+    def start(self):
+        bracket = self.BracketOrder(self)
+        for o in bracket:
+            self.placeOrder(self.nextOrderId, self.contract, o)
+            # self.nextOrderId() # need to advance this we'll skip one extra oid, it's fine
 
 
     def stop(self):
@@ -178,13 +239,6 @@ def runIB():
 #         cln.th.join(timeout=5)
 
 
-
-
-
-# done  1.при первом запуске (run) идет только подключение к TWS
-# done  2.далее проверка есть ли в списке задач, задача с подходящи временем
-#         если время подходящее то идет запуск задачи по покупке или продаже тикера по "стартовой цене"
-# ордера на покупку (тригер на покупку)
 
 
 # Основное описание бота:
