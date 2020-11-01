@@ -16,7 +16,9 @@ class ShablonForm(Form): #созд шаблона
     timeToClose = StringField('Время авто-закрытия сделок', default="") #, format='%H:%M'
 
 class DealForm(Form):
-    tiker = StringField('тикер сделки')
+    tiker = SelectField('Тикер сделки', coerce=int, choices=[
+        (0, 'EUR.USD'),
+        (1, 'GBP.USD')])
     IVvolativ = FloatField('IV, ожидаемая волативность в %')
     risk = IntegerField('Риск на сделку, в %')
     TimeFrom = StringField('Время снятия стартовой цены от', default="")
